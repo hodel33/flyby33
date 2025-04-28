@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+      <!-- Map Background -->
+      <rect width="64" height="64" fill="#0b1013" />
+      <!-- Proximity Circle -->
+      <circle cx="32" cy="32" r="28" fill="none" stroke="#F39C12" stroke-width="2.5" />
+      <!-- Proximity Center -->
+      <circle cx="32" cy="32" r="3" fill="#F39C12" />
+      <!-- Plane Trail -->
+      <path d="M43,53 L52,62" stroke="#C9EEFF" stroke-width="1.5" />
+      <!-- Bearing Line - Thicker line -->
+      <line x1="28" y1="38" x2="4" y2="14" stroke="#F39C12" stroke-width="1.5" stroke-dasharray="3,1.5" />
+      <!-- Plane - Larger scale -->
+      <g transform="translate(20,45.4) rotate(-45) scale(0.7)">
+      <path d="M15.521 3.91c0.828 0 1.5 0.672 1.5 1.5v7.75l10 6.25v2.688l-10-3.375v5.25l2.039 2.029-0.001 2.084l-3.538-1.176-3.487 1.18 0.015-2.189 1.91-1.865 0.017-5.312-9.997 3.436 0.021-2.75 10.007-6.313 0.016-7.688c-0.002-0.827 0.67-1.499 1.498-1.499z" fill="#C9EEFF"/>
+      </g>
+  </svg>

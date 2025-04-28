@@ -1,0 +1,13 @@
+/__pycache__/*
+/venv/*
+/dist/*
+.env
+*.log
+
+/backup/*
+/exports/*
+/stuff/*
+
+run_main.bat
+run_streamlit.bat
+sql_database.db
