@@ -42,34 +42,47 @@ If you are interested in accessing Flightradar24 data commercially, please go to
 
 ## ⚙️ Installation
 
-### 🛠️ Prerequisites
+### 🛠️ Installation Steps
 
-1. 🐍 **Python**: This application is written in Python 3.11. Ensure you have the same version or higher installed. You can download Python for free from [Python's official website](https://www.python.org/downloads/).
+1. 🐍 **Install Python**
+   - Download and install Python 3.11 or higher from [Python's official website](https://www.python.org/downloads/)
+   - **Tip**: During installation, make sure to check "Add Python to PATH"
+   - Verify installation by opening a terminal and running:
+     ```bash
+     python --version
+     ```
 
-2. 📦 **Dependencies**: The required Python packages for this project to work properly are listed in `requirements.txt`. You can install them automatically by opening a terminal and running the command `pip install -r requirements.txt`.
-   > On some systems, you might need to use `pip3` instead of `pip` if you have multiple Python versions installed (to specifically target Python 3)
+2. ⬇️ **Download Project Files** (Repository)
 
-3. 🌎 **Internet**: Internet connection for accessing Flightradar24 real-time data, and a Web Browser if you're going to use the Streamlit web interface.
+   You have two primary methods to obtain this project:
 
-4. 🖋️ **IDE (Optional)**: For code editing, [VS Code](https://code.visualstudio.com/) is recommended. As well as adding the [Python extension for VS Code](https://marketplace.visualstudio.com/items?itemName=ms-python.python).
-
-
-### ⬇️ Download Project Files (Repository)
-
-You have two primary methods to obtain this project:
-
-1. **Direct ZIP Download**:
-   - Visit the GitHub repository page https://github.com/hodel33/flyby33
-   - Click the green "Code" button
-   - Select "Download ZIP"
+   A. **Direct ZIP Download**:
+   - Visit the GitHub repository: https://github.com/hodel33/flyby33
+   - Click the green "Code" button and select "Download ZIP"
    - Extract the downloaded ZIP file to your desired location
 
-2. **Git Clone**:
+   B. **Git Clone** (recommended for developers):
    - Open a terminal
    - Run the following command:
    ```bash
    git clone https://github.com/hodel33/flyby33.git
    ```
+
+3. 📦 **Install Project Dependencies** (Python packages used in this project)
+
+   The required Python packages for this project to work properly are listed in `requirements.txt`. You can install them automatically by opening a terminal and running the command:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+   > On some systems, you might need to use `pip3` instead of `pip` if you have multiple Python versions installed (to specifically target Python 3)
+
+### ℹ️ Additional Requirements
+
+- 🌎 **Internet**: Internet connection for accessing Flightradar24 real-time data and a Web Browser if you're going to use the Streamlit web interface.
+
+- 🖋️ **IDE (Optional)**: For code editing, [VS Code](https://code.visualstudio.com/) is recommended. As well as adding the [Python extension for VS Code](https://marketplace.visualstudio.com/items?itemName=ms-python.python).
 
 <br>
 
@@ -79,11 +92,11 @@ The application's behavior is controlled by the `config.ini` file.<br>Below is a
 
 ```ini
 [Settings]
-location_coords = 21.33, -157.98  # Example: Hawaii coordinates
-location_radius = 100              # Radius in kilometers (50, 100, 150, 200)
-auto_refresh_interval = 30        # Refresh interval in seconds (0: Off, 15, 30, 60)
-ignore_airport_proximity = False   # Set to True to include flights landing at nearby airports
-debug_mode = False                 # Enable for detailed logging (terminal version)
+location_coords = 21.33, -157.98    # Coordinates (Lat, Lng) - Example: Hawaii coordinates
+location_radius = 100               # Radius in kilometers (50, 100, 150, 200)
+auto_refresh_interval = 30          # Refresh interval in seconds (0: Off, 15, 30, 60)
+ignore_airport_proximity = False    # Set to True to include flights landing at nearby airports
+debug_mode = False                  # Enable for detailed logging (terminal version)
 ```
 
 > - For **Terminal Script**: Configuration in `config.ini` is mandatory before running.
@@ -137,7 +150,7 @@ Use convenient scripts in `startup_scripts` folder which you can double-click to
 ```
 
    - Use any of the methods:
-      * Control-click the folder in the path bar to open a new Terminal window or 
+      * Control-click the folder in the path bar to open a new Terminal window
       * Drag the folder into the terminal
       * Use `cd` command to change to the project directory
 
