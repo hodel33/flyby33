@@ -283,7 +283,7 @@ Behind the scenes, Flyby33 combines real-time flight data with sophisticated pre
 
 1. **Database Foundation**: The application uses an SQLite database as its backbone, providing efficient storage and retrieval of flight information across sessions.
 
-2. **Reference Data Collection**: Flyby33 builds a comprehensive database of airports (including available coordinates) and airlines information by first fetching core info from Flightradar24, then enriching it with additional data from the airportsdata Python package.
+2. **Reference Data Collection**: Flyby33 loads a comprehensive database of airports (including coordinates, city names) and airlines information from a pre-compiled JSON file during initial database setup.
 
 3. **Real-time Flight Fetching**: When you specify a location, the application queries Flightradar24 through [JeanExtreme002's SDK](https://github.com/JeanExtreme002/FlightradarAPI) to capture all airborne aircraft within your chosen monitoring radius.
 
@@ -326,7 +326,7 @@ The result is a real-time window into the skies above, predicting which aircraft
 
 * **Airport Proximity Filter**: If you're located near an airport and notice many aircraft without predicted flyby paths, try enabling the "ignore airport proximity" setting, which will include planes that are likely landing at nearby airports.
 
-* **First Run Setup**: The first time you run the application, it will download reference data for airports and airlines, which may take a short extra while. The application automatically refreshes this reference data once a month. Subsequent runs will be much faster.
+* **First Run Setup**: The first time you run the application, it will load reference data for airports and airlines from the included JSON file into the database. This is a one-time setup that happens automatically. Subsequent runs will be immediate.
 
 * **Database Growth**: The application stores flight data `sql_database.db` for up to 7 days. If you run the application frequently in areas with heavy air traffic, the database file size might grow larger. This is normal and the application automatically cleans up old data.
 
