@@ -157,6 +157,8 @@ try:
 except sqlite3.OperationalError:
     for query in db_init_tables:
         sql.execute(db_path, query)
+    # Load initial reference data immediately after table creation
+    sql.DatabaseUtils.load_reference_data_from_json(db_path, "airport_airline_data.json")
 
 # ------------------------------------------------------------
 # Initialize Session State with Config Data
@@ -257,7 +259,6 @@ def fetch_flight_data():
     
     # Database cleanup and reference data refresh
     sql.DatabaseUtils.cleanup_old_flights(db_path) # Remove old flight data which is older than 1 week
-    Utils.refresh_reference_data(db_path, st.session_state.fr_api, DEBUG_MODE=False) # Refresh airport/airline reference data if older than 1 month
     existing_flights_with_details = [] # Empty list since we are not using the api detailed flight functionality here
     
     async def async_fetch_flight_data():

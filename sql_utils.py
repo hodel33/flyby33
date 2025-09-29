@@ -236,150 +236,65 @@ class DatabaseUtils:
         return saved_count
        
     @staticmethod
-    def save_airport_data_to_db(db_path, airport_data_list):
+    def load_reference_data_from_json(db_path, json_file="airport_airline_data.json"):
         """
-        Save airport data to database using batch processing.
-            
-        :param db_path: Path to the SQLite database
-        :param airport_data_list: List of airport data dictionaries to save
-        :return int: Number of airport records saved to database
-        """
+        Load airport and airline data from JSON file into database.
+        Only imports if tables are empty.
         
-        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        :param db_path: Path to the SQLite database
+        :param json_file: Path to JSON file with airport and airline data
+        :return: Dictionary with loaded airport_data and airline_data lists
+        """
+        result = {"airport_data": [], "airline_data": []}
         
         try:
-            # Add timestamp to all records
-            airport_data_list = [{**airport, 'last_fetch_timestamp': current_time} for airport in airport_data_list]
+            # Check if data already exists
+            counts = {
+                'airport': execute(db_path, "SELECT COUNT(*) FROM airport_data")[0]['COUNT(*)'],
+                'airline': execute(db_path, "SELECT COUNT(*) FROM airline_data")[0]['COUNT(*)']
+            }
             
-            # Ensure we have airports to process
-            if not airport_data_list:
-                return 0
+            if counts['airport'] > 0 and counts['airline'] > 0:
+                print(f"Database already has data: {counts['airport']} airports, {counts['airline']} airlines")
+                return result
+            
+            # Load JSON and get current timestamp
+            with open(json_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            
+            current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            
+            # Helper function to import data
+            def import_table(table_name, data_key, count):
+                if count > 0 or data_key not in data:
+                    return []
                 
-            # Get columns from the first airport (assuming all have same structure)
-            columns = ','.join(airport_data_list[0].keys())
-            placeholders = ','.join(['?'] * len(airport_data_list[0]))
+                items = data[data_key]
+                for item in items:
+                    item['last_fetch_timestamp'] = current_time
+                    # Convert empty strings to None
+                    if 'city' in item and item['city'] == '':
+                        item['city'] = None
+                    if 'country' in item and item['country'] == '':
+                        item['country'] = None
+                
+                columns = ','.join(items[0].keys())
+                placeholders = ','.join(['?'] * len(items[0]))
+                sql = f"INSERT OR REPLACE INTO {table_name} ({columns}) VALUES ({placeholders})"
+                param_sets = [list(item.values()) for item in items]
+                
+                execute(db_path, sql, param_sets)
+                return items
             
-            # Create SQL statement
-            sql = f"INSERT OR REPLACE INTO airport_data ({columns}) VALUES ({placeholders})"
+            # Import both tables
+            result["airport_data"] = import_table("airport_data", "airport_data", counts['airport'])
+            result["airline_data"] = import_table("airline_data", "airline_data", counts['airline'])
             
-            # Prepare parameter lists for each airport
-            param_sets = [list(airport.values()) for airport in airport_data_list]
-            
-            # Execute as a batch operation
-            saved_count = execute(db_path, sql, param_sets)
-            
-            return saved_count
+            return result
             
         except Exception as e:
-            print(f"Error during batch airport save: {e}")
-            return 0
-
-    @staticmethod
-    def save_airline_data_to_db(db_path, airline_data_list):
-        """
-        Save airline data to database using batch processing.
-       
-        :param db_path: Path to the SQLite database
-        :param airline_data_list: List of airline data dictionaries to save
-        :return int: Number of airline records saved to database
-        """
-        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        
-        try:
-            
-            # Add timestamp to all records
-            airline_data_list = [{**airline, 'last_fetch_timestamp': current_time} for airline in airline_data_list]
-            
-            # Ensure we have airlines to process
-            if not airline_data_list:
-                return 0
-                
-            # Get columns from the first airline (assuming all have same structure)
-            columns = ','.join(airline_data_list[0].keys())
-            placeholders = ','.join(['?'] * len(airline_data_list[0]))
-            
-            # Create SQL statement
-            sql = f"INSERT OR REPLACE INTO airline_data ({columns}) VALUES ({placeholders})"
-            
-            # Prepare parameter lists for each airline
-            param_sets = [list(airline.values()) for airline in airline_data_list]
-            
-            # Execute as a batch operation
-            saved_count = execute(db_path, sql, param_sets)
-            
-            return saved_count
-            
-        except Exception as e:
-            print(f"Error during batch airline save: {e}")
-            return 0
-        
-    @staticmethod
-    def fetch_airport_city_data(db_path):
-        """
-        Fetch city information for airports that need it.
-        
-        :param db_path: Path to the SQLite database
-        :return list: List of dictionaries with airport ID and city information
-        """        
-        # Load airport data with both IATA and ICAO codes as keys
-        iata_airports = airportsdata.load('IATA')
-        icao_airports = airportsdata.load('ICAO')
-        
-        # Get all airports that need city information
-        airports = execute(db_path, "SELECT id, icao, iata FROM airport_data WHERE city IS NULL")
-        
-        if not airports: # o airports found needing city data
-            return []
-        
-        # Create result list
-        airport_city_data = []
-        
-        # Process each airport
-        for airport in airports:
-            city = None
-            
-            # Try to get data using ICAO code first (more reliable)
-            if airport['icao'] and airport['icao'] in icao_airports:
-                city = icao_airports[airport['icao']]['city']
-            
-            # If no city found and IATA code exists, try this
-            if not city and airport['iata'] and airport['iata'] in iata_airports:
-                city = iata_airports[airport['iata']]['city']
-            
-            # If city found, add to results
-            if city:
-                airport_city_data.append({
-                    'id': airport['id'],
-                    'city': city
-                })
-        
-        return airport_city_data
-
-    @staticmethod
-    def save_airport_city_data_to_db(db_path, airport_city_data):
-        """
-        Save airport city info to database using batch processing.
-        
-        :param db_path: Path to the SQLite database
-        :param airport_city_data: List of dictionaries with airport ID and city
-        :return int: Number of airports updated
-        """        
-        try:
-            # Ensure we have data to process
-            if not airport_city_data:
-                return 0
-                
-            # Prepare update parameters [city, id]
-            param_sets = [[airport['city'], airport['id']] for airport in airport_city_data]
-            
-            # Execute batch update
-            updated_count = execute(db_path, "UPDATE airport_data SET city = ? WHERE id = ?", param_sets)
-            
-            return updated_count
-            
-        except Exception as e:
-            print(f"Error during batch airport city update: {e}")
-            return 0
+            print(f"Error loading reference data from JSON: {e}")
+            return result
         
     @staticmethod
     def enrich_missing_flight_data_from_db(db_path, flight_list):
@@ -492,39 +407,6 @@ class DatabaseUtils:
         except Exception as e:
             print(f"Error during flight enrichment update: {e}")
             return 0
-        
-    @staticmethod
-    def is_reference_data_refresh_needed(db_path):
-        """
-        Check if airport and airline reference data needs to be refreshed.
-        
-        :param db_path: Path to the SQLite database
-        :return bool: True if no data exists or if the most recent fetch is older than time passed threshold
-        """
-        # Check latest fetch timestamp from both airport and airline tables
-        latest_fetch_result = execute(db_path, """
-            SELECT MAX(last_fetch_timestamp) AS latest_timestamp
-            FROM (
-                SELECT last_fetch_timestamp FROM airport_data
-                UNION ALL
-                SELECT last_fetch_timestamp FROM airline_data
-            )
-        """)
-        latest_timestamp = latest_fetch_result[0][0] if latest_fetch_result and latest_fetch_result[0][0] else None
-        
-        # If no data exists in either table, we need to refresh
-        if not latest_timestamp:
-            return True
-
-        try:
-            latest_fetch_date = datetime.strptime(latest_timestamp, "%Y-%m-%d %H:%M:%S")
-            time_passed_refresh_threshold = datetime.now() - timedelta(days=30) # Check if the most recent fetch is older than the time threshold
-
-            return latest_fetch_date < time_passed_refresh_threshold
-            
-        except (ValueError, TypeError):
-            # If there's any issue parsing the date, refresh to be safe
-            return True
 
     @staticmethod
     def cleanup_old_flights(db_path, days_threshold=7):

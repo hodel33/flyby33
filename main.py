@@ -1486,90 +1486,6 @@ class Utils:
         
         return standardized_flights
     
-    @staticmethod
-    def fetch_api_airport_data(fr_api):
-        """
-        Fetch airport data from FlightRadar24 API.
-
-        :param fr_api: FlightRadar24API instance
-        :return: List of airport dictionaries with data            
-        """
-        airport_data_api_objects = fr_api.get_airports()
-        
-        # List comprehension which converts the flightradar objects to dictionaries
-        airport_data_list = [
-            {
-                'icao': airport.icao,
-                'iata': getattr(airport, 'iata', ''),
-                'name': airport.name,
-                'lat': airport.latitude,
-                'lng': airport.longitude,
-                'country': getattr(airport, 'country', ''),
-            } for airport in airport_data_api_objects
-        ]
-
-        return airport_data_list
-
-    @staticmethod
-    def fetch_api_airline_data(fr_api):
-        """
-        Fetch airline data from FlightRadar24 API.
-        
-        :param fr_api: FlightRadar24API instance
-        :return: List of airline dictionaries with data
-        """
-        airline_data_api_list = fr_api.get_airlines()
-
-        # List comprehension to convert to the format we need
-        airline_data_list = [
-            {
-                'icao': airline['ICAO'],
-                'name': airline['Name'],
-            } for airline in airline_data_api_list if airline['ICAO']  # Skip entries with empty ICAO
-        ]
-
-        return airline_data_list
-
-    @staticmethod    
-    def refresh_reference_data(db_path, fr_api, DEBUG_MODE=False):
-        """
-        Check if reference data needs refreshing and performs the refresh if needed.
-        
-        :param db_path: Path to the SQLite database file
-        :param fr_api: FlightRadar API client instance
-        :param DEBUG_MODE: Enable debug mode for detailed logging to debug file.
-        :return: bool: True if data was refreshed, False if refresh wasn't needed
-        """
-        # Check if reference data needs refreshing
-        is_reference_data_refresh_needed = sql.DatabaseUtils.is_reference_data_refresh_needed(db_path)
-
-        if is_reference_data_refresh_needed:
-
-            Utils.LOG_RAW(f"\n{'-' * 60}") if DEBUG_MODE else None # DEBUG # Log Divider
-            Utils.LOG_TS("Refreshing reference data - airport/airline info is missing or outdated.") if DEBUG_MODE else None # DEBUG
-
-            # Fetch API airport data and save to DB
-            airport_data_api_list = Utils.fetch_api_airport_data(fr_api)
-            Utils.LOG_RAW(f"Found data for {len(airport_data_api_list)} airports from API") if DEBUG_MODE else None # DEBUG
-            airports_saved_count = sql.DatabaseUtils.save_airport_data_to_db(db_path, airport_data_api_list)
-            Utils.LOG_RAW(f"Saved {airports_saved_count} airports to database") if DEBUG_MODE else None # DEBUG
-            
-            # Fetch API airline data and save to DB
-            airline_data_api_list = Utils.fetch_api_airline_data(fr_api)
-            Utils.LOG_RAW(f"Found data for {len(airline_data_api_list)} airlines from API") if DEBUG_MODE else None # DEBUG
-            airlines_saved_count = sql.DatabaseUtils.save_airline_data_to_db(db_path, airline_data_api_list)
-            Utils.LOG_RAW(f"Saved {airlines_saved_count} airlines to database") if DEBUG_MODE else None # DEBUG
-            
-            # Fetch city data from airportsdata package for airports missing this info and save to DB
-            airport_city_data = sql.DatabaseUtils.fetch_airport_city_data(db_path)
-            Utils.LOG_RAW(f"Found city data for {len(airport_city_data)} airports") if DEBUG_MODE else None # DEBUG
-            airport_data_updated_count = sql.DatabaseUtils.save_airport_city_data_to_db(db_path, airport_city_data)
-            Utils.LOG_RAW(f"Updated {airport_data_updated_count} airports with city data") if DEBUG_MODE else None # DEBUG # DEBUG
-    
-            return True
-        else:
-            return False
-
 
 
 if __name__ == '__main__':
@@ -1601,6 +1517,8 @@ if __name__ == '__main__':
     except sqlite3.OperationalError:
         for query in db_init_tables:
             sql.execute(db_path, query)
+        # Load initial reference data immediately after table creation
+        sql.DatabaseUtils.load_reference_data_from_json(db_path, "airport_airline_data.json")
 
     # Setup logging
     Utils.setup_logging("debug.log") if DEBUG_MODE else None # DEBUG
@@ -1621,9 +1539,6 @@ if __name__ == '__main__':
 
     # Remove old flight data which is older than 1 week
     sql.DatabaseUtils.cleanup_old_flights(db_path)
-
-    # Refresh airport/airline reference data if older than 1 month
-    Utils.refresh_reference_data(db_path, fr_api, DEBUG_MODE=DEBUG_MODE)
 
     # Load existing flight IDs which already have recent detailed data (less than 6 minutes old)
     existing_flights_with_details = sql.DatabaseUtils.get_flights_with_details_fetched(db_path)
